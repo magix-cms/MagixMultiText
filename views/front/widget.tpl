@@ -4,7 +4,7 @@
         <div class="row">
             <div class="col-12">
                 {foreach $magix_multitext_data.items as $textBlock}
-                    <div class="multitext-block mb-4 p-4 bg-light rounded shadow-sm">
+                    <div class="multitext-block mb-4 p-4 bg-body-tertiary rounded shadow-sm">
 
                         {if !empty($textBlock.title_textmulti)}
                             <h3 class="multitext-title h4 mb-3 fw-bold text-dark">
