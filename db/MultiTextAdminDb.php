@@ -9,6 +9,32 @@ use Magepattern\Component\Database\QueryBuilder;
 class MultiTextAdminDb extends BaseDb
 {
     /**
+     * Sauvegarde un texte complet (structure + traductions)
+     * C'est cette méthode qui est appelée par le BackendController
+     */
+    public function saveText(int $idText, string $module, int $idModule, array $contentData): bool
+    {
+        // 1. Si c'est un nouveau texte, on crée d'abord la structure
+        if ($idText === 0) {
+            $idText = $this->insertTextStructure([
+                'module_textmulti' => $module,
+                'id_module'        => $idModule
+            ]);
+
+            // Si l'insertion échoue, on arrête tout
+            if ($idText === false || $idText === 0) {
+                return false;
+            }
+        }
+
+        // 2. On boucle sur les langues pour enregistrer/mettre à jour le contenu
+        foreach ($contentData as $idLang => $data) {
+            $this->saveTextContent($idText, $idLang, $data);
+        }
+
+        return true;
+    }
+    /**
      * Récupère tous les textes d'un module et ID spécifique pour la liste (dans une langue donnée)
      */
     public function getTextsByModule(string $module, int $idModule, int $idLang): array
@@ -36,7 +62,7 @@ class MultiTextAdminDb extends BaseDb
     }
 
     /**
-     * 🟢 NOUVEAU : Récupère un texte spécifique avec TOUTES ses traductions (pour le formulaire d'édition)
+     *  NOUVEAU : Récupère un texte spécifique avec TOUTES ses traductions (pour le formulaire d'édition)
      */
     public function getTextById(int $idText): array|false
     {
@@ -63,7 +89,7 @@ class MultiTextAdminDb extends BaseDb
     }
 
     /**
-     * 🟢 NOUVEAU : Insère uniquement la structure de base et retourne l'ID
+     *  NOUVEAU : Insère uniquement la structure de base et retourne l'ID
      */
     public function insertTextStructure(array $data): int|false
     {
@@ -86,7 +112,7 @@ class MultiTextAdminDb extends BaseDb
     }
 
     /**
-     * 🟢 NOUVEAU : Sauvegarde ou met à jour le contenu traduit d'un texte
+     *  NOUVEAU : Sauvegarde ou met à jour le contenu traduit d'un texte
      */
     public function saveTextContent(int $idText, int $idLang, array $data): bool
     {

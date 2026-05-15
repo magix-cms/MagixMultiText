@@ -8,12 +8,13 @@ use Plugins\MagixMultiText\db\MultiTextAdminDb;
 use Magepattern\Component\HTTP\Request;
 use Magepattern\Component\Tool\SmartyTool;
 use Magepattern\Component\Tool\FormTool;
+use App\Component\Cache\CacheManager; // 🟢 Import du gestionnaire de cache
 
 class BackendController extends BaseController
 {
     public function run(): void
     {
-        // 🟢 CORRECTION 1 : On donne un namespace unique au dossier pour éviter les conflits
+        //  CORRECTION 1 : On donne un namespace unique au dossier pour éviter les conflits
         SmartyTool::addTemplateDir('multitext', ROOT_DIR . 'plugins' . DS . 'MagixMultiText' . DS . 'views' . DS . 'admin');
 
         $action = $_GET['action'] ?? null;
@@ -41,7 +42,7 @@ class BackendController extends BaseController
         $db = new MultiTextAdminDb();
         $texts = $db->getTextsByModule($module, $idModule, $idLang);
 
-        // 🟢 CORRECTION 2 : On injecte les traductions complètes pour le JS
+        //  CORRECTION 2 : On injecte les traductions complètes pour le JS
         foreach ($texts as &$text) {
             $fullData = $db->getTextById((int)$text['id_textmulti']);
             $text['content'] = $fullData['content'] ?? [];
@@ -70,7 +71,7 @@ class BackendController extends BaseController
             'langs'           => $db->fetchLanguages() // On passe les langues pour le dropdown
         ]);
 
-        // 🟢 N'oubliez pas d'utiliser le nouveau préfixe ici !
+        //  N'oubliez pas d'utiliser le nouveau préfixe ici !
         $this->view->display('ajax/manager.tpl');
     }
 
@@ -94,7 +95,7 @@ class BackendController extends BaseController
         $db = new MultiTextAdminDb();
 
         try {
-            // 🟢 CORRECTION 3 : Traitement séparé Structure / Contenu Multilingue
+            //  CORRECTION 3 : Traitement séparé Structure / Contenu Multilingue
             if ($idText === 0) {
                 // Remplacez 'insertTextStructure' par le nom exact de votre méthode DB
                 $idText = $db->insertTextStructure([
@@ -123,6 +124,9 @@ class BackendController extends BaseController
                 }
             }
 
+            // 🟢 Invalidation du cache après sauvegarde
+            CacheManager::clearFrontend('magixmultitext');
+
             $this->jsonResponse(true, 'Texte enregistré avec succès.');
 
         } catch (\Exception $e) {
@@ -144,6 +148,8 @@ class BackendController extends BaseController
         if ($idText > 0) {
             $db = new MultiTextAdminDb();
             if ($db->deleteText($idText)) {
+                // 🟢 Invalidation du cache après suppression
+                CacheManager::clearFrontend('magixmultitext');
                 $this->jsonResponse(true, 'Texte supprimé avec succès.');
             }
         }
@@ -164,6 +170,8 @@ class BackendController extends BaseController
         if (!empty($orderedIds) && is_array($orderedIds)) {
             $db = new MultiTextAdminDb();
             if ($db->updateOrder($orderedIds)) {
+                // 🟢 Invalidation du cache après réorganisation
+                CacheManager::clearFrontend('magixmultitext');
                 $this->jsonResponse(true, 'Ordre mis à jour.');
             }
         }
